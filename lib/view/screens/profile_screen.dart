@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:recipe/core/utils/logger.dart';
 import 'package:recipe/view/cubits/auth_cubit.dart';
 import 'package:recipe/view/cubits/auth_state.dart';
+import 'package:recipe/view/cubits/theme_cubit.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -24,169 +25,227 @@ class ProfileScreen extends StatelessWidget {
         return state.maybeWhen(
           authenticated: (user) {
             logger.i('Building profile screen for user: ${user.email}');
-            return Scaffold(
-              appBar: AppBar(
-                title: Text(
-                  'Profile',
-                  style: GoogleFonts.nunito(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                actions: [
-                  IconButton(
-                    onPressed: () {
-                      logger.i('Logout button pressed');
-                      context.read<AuthCubit>().signOut();
-                    },
-                    icon: const Icon(Icons.logout),
-                  ),
-                ],
-              ),
-              body: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundImage: user.avatarUrl != null
-                          ? NetworkImage(user.avatarUrl!)
-                          : null,
-                      child: user.avatarUrl == null
-                          ? Text(
-                              user.name?[0].toUpperCase() ?? user.email![0].toUpperCase(),
-                              style: const TextStyle(fontSize: 32),
-                            )
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      user.name ?? 'User',
-                      style: GoogleFonts.nunito(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+            return BlocBuilder<ThemeCubit, bool>(
+              builder: (context, isDarkMode) {
+                return Scaffold(
+                  backgroundColor: Colors.white,
+                  body: SingleChildScrollView(
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 71),
+                          // Profile Image
+                          Container(
+                            width: 248,
+                            height: 248,
+                            decoration: ShapeDecoration(
+                              gradient: const LinearGradient(
+                                begin: Alignment(0.71, 0.71),
+                                end: Alignment(-0.71, -0.71),
+                                colors: [Color(0xFF1FA484), Color(0xFF48D89E)],
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(34),
+                                side: const BorderSide(width: 8, color: Color(0xFFB3F1D8)),
+                              ),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(34),
+                              child: user.avatarUrl != null
+                                ? Image.network(
+                                    user.avatarUrl!,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Center(
+                                    child: Text(
+                                      user.name?[0].toUpperCase() ?? user.email![0].toUpperCase(),
+                                      style: GoogleFonts.nunito(
+                                        fontSize: 64,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                            ),
+                          ),
+                          const SizedBox(height: 54),
+                          // User Info
+                          Text(
+                            user.name ?? 'User',
+                            style: GoogleFonts.nunito(
+                              fontSize: 27,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF0B2634),
+                            ),
+                          ),
+                          const SizedBox(height: 19),
+                          Text(
+                            '@${user.email?.split('@')[0] ?? 'user'}',
+                            style: GoogleFonts.nunito(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF888888),
+                            ),
+                          ),
+                          const SizedBox(height: 19),
+                          // Social Icons
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              IconButton(
+                                icon: Image.asset('assets/icons/google.png', width: 18, height: 18),
+                                onPressed: () {
+                                  // Handle Google account linking
+                                  logger.i('Google account linking pressed');
+                                },
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: Image.asset('assets/icons/settings.png', width: 18, height: 18),
+                                onPressed: () {
+                                  Navigator.pushNamed(context, '/settings');
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 30),
+                          // Stats
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildStatItem(
+                                icon: Icons.bookmark_border,
+                                count: '12',
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/saved-recipes');
+                                },
+                              ),
+                              const SizedBox(width: 30),
+                              _buildStatItem(
+                                icon: Icons.favorite_border,
+                                count: '12',
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/favorite-recipes');
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 44),
+                          // Menu Items
+                          _buildMenuItem(
+                            title: 'Dark Mode',
+                            trailing: Switch(
+                              value: isDarkMode,
+                              onChanged: (value) {
+                                context.read<ThemeCubit>().toggleTheme();
+                              },
+                              activeColor: const Color(0xFF40CC92),
+                              inactiveTrackColor: const Color(0xFFE6E0E9),
+                            ),
+                          ),
+                          _buildMenuItem(
+                            title: 'Log Out',
+                            onTap: () {
+                              logger.i('Logout pressed');
+                              context.read<AuthCubit>().signOut();
+                            },
+                          ),
+                          _buildMenuItem(
+                            title: 'Grocery List',
+                            onTap: () {
+                              Navigator.pushNamed(context, '/grocery-list');
+                            },
+                          ),
+                          _buildMenuItem(
+                            title: 'Settings',
+                            onTap: () {
+                              Navigator.pushNamed(context, '/settings');
+                            },
+                          ),
+                        ],
                       ),
                     ),
-                    Text(
-                      user.email!,
-                      style: GoogleFonts.nunito(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    _buildProfileSection(
-                      title: 'Account Information',
-                      children: [
-                        _buildInfoTile(
-                          icon: Icons.calendar_today,
-                          title: 'Member Since',
-                          subtitle: _formatDate(user.createdAt),
-                        ),
-                        _buildInfoTile(
-                          icon: Icons.access_time,
-                          title: 'Last Login',
-                          subtitle: _formatDate(user.updatedAt),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _buildProfileSection(
-                      title: 'App Settings',
-                      children: [
-                        _buildSettingsTile(
-                          icon: Icons.notifications,
-                          title: 'Notifications',
-                          onTap: () {
-                            logger.i('Notifications settings tapped');
-                          },
-                        ),
-                        _buildSettingsTile(
-                          icon: Icons.language,
-                          title: 'Language',
-                          onTap: () {
-                            logger.i('Language settings tapped');
-                          },
-                        ),
-                        _buildSettingsTile(
-                          icon: Icons.dark_mode,
-                          title: 'Dark Mode',
-                          onTap: () {
-                            logger.i('Dark mode settings tapped');
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             );
           },
-          orElse: () => const Center(child: CircularProgressIndicator()),
+          orElse: () => const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          ),
         );
       },
     );
   }
 
-  Widget _buildProfileSection({
-    required String title,
-    required List<Widget> children,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: GoogleFonts.nunito(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Card(
-          child: Column(
-            children: children,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoTile({
+  Widget _buildStatItem({
     required IconData icon,
-    required String title,
-    required String subtitle,
+    required String count,
+    VoidCallback? onTap,
   }) {
-    return ListTile(
-      leading: Icon(icon, color: const Color(0xFF4CAF50)),
-      title: Text(
-        title,
-        style: GoogleFonts.nunito(fontWeight: FontWeight.w600),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: GoogleFonts.nunito(),
-      ),
-    );
-  }
-
-  Widget _buildSettingsTile({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: const Color(0xFF4CAF50)),
-      title: Text(
-        title,
-        style: GoogleFonts.nunito(fontWeight: FontWeight.w600),
-      ),
-      trailing: const Icon(Icons.chevron_right),
+    return InkWell(
       onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: ShapeDecoration(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: const Color(0xFF40CC92)),
+            const SizedBox(width: 8),
+            Text(
+              count,
+              style: GoogleFonts.nunito(
+                fontSize: 23,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF40CC92),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+  Widget _buildMenuItem({
+    required String title,
+    Widget? trailing,
+    VoidCallback? onTap,
+  }) {
+    return Container(
+      width: double.infinity,
+      height: 76,
+      margin: const EdgeInsets.only(bottom: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFB3F1D8)),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: GoogleFonts.nunito(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF0B2634),
+              ),
+            ),
+            trailing ?? const Icon(
+              Icons.chevron_right,
+              color: Color(0xFF40CC92),
+            ),
+          ],
+        ),
+      ),
+    );
   }
-} 
+}

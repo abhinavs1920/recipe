@@ -7,40 +7,45 @@ class SearchFilters extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(
+        minHeight: 160,
+      ),
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
+      clipBehavior: Clip.antiAlias,
+      decoration: ShapeDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.primary.withOpacity(0.8),
-          ],
+          begin: const Alignment(0.01, -1.00),
+          end: const Alignment(-0.01, 1),
+          colors: [const Color(0xFF18A66C), Colors.black.withOpacity(0.7)],
         ),
-        borderRadius: BorderRadius.circular(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(11),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Make Most Of What\nYou Have',
+            'Make most of What you Have',
             style: GoogleFonts.nunito(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
               color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
-            'Search Recipes By',
+            'search Recipes by',
             style: GoogleFonts.nunito(
+              color: const Color(0xFFB0B0B0),
               fontSize: 14,
-              color: Colors.white.withOpacity(0.8),
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 16),
           Wrap(
-            spacing: 8,
+            spacing: 10,
             runSpacing: 8,
             children: [
               _FilterChip(label: 'Ingredients'),
@@ -65,16 +70,19 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: ShapeDecoration(
+        color: const Color(0x70AAAAAA),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(11),
+        ),
       ),
       child: Text(
         label,
         style: GoogleFonts.nunito(
-          fontSize: 14,
           color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );

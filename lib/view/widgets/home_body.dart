@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:recipe/core/utils/logger.dart';
 import 'package:recipe/view/cubits/recipe_cubit.dart';
 import 'package:recipe/view/cubits/recipe_state.dart';
+import 'package:recipe/view/screens/recipe_details_screen.dart';
 import 'package:recipe/view/widgets/error_display.dart';
 import 'package:recipe/view/widgets/loading_indicator.dart';
 import 'package:recipe/view/widgets/recipe_card.dart';
@@ -24,7 +25,6 @@ class HomeBody extends StatelessWidget {
       children: [
         const SearchFilters(),
         const SizedBox(height: 32),
-
         Text(
           'Some Recipes',
           style: GoogleFonts.nunito(
@@ -42,16 +42,35 @@ class HomeBody extends StatelessWidget {
                 message: message,
                 onRetry: onRefresh,
               ),
-              recipesLoaded: (recipes) => Column(
-                children: recipes.map((recipe) {
-                  return RecipeCard(
-                    recipe: recipe,
-                    onTap: () {
-                      logger.i('Recipe tapped: ${recipe.title}');
-                    },
-                    isBookmarked: false,
-                  );
-                }).toList(),
+              recipesLoaded: (recipes) => SizedBox(
+                height: 300,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: recipes.length,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemBuilder: (context, index) {
+                    final recipe = recipes[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: SizedBox(
+                        width: 230,
+                        child: RecipeCard(
+                          recipe: recipe,
+                          isBookmarked: false,
+                          onTap: () { 
+                            context.read<RecipeCubit>().setSelectedRecipe(recipe);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RecipeDetailsScreen(),
+                              ),
+                            );
+                           },
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
               bookmarkAdded: () => const SizedBox(),
               bookmarkRemoved: () => const SizedBox(),

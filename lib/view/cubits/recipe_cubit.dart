@@ -6,8 +6,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RecipeCubit extends Cubit<RecipeState> {
   final SupabaseClient _supabaseClient;
+  RecipeModel? _selectedRecipe;
 
   RecipeCubit(this._supabaseClient) : super(const RecipeState.initial());
+
+  RecipeModel? get selectedRecipe => _selectedRecipe;
+
+  void setSelectedRecipe(RecipeModel recipe) {
+    _selectedRecipe = recipe;
+    emit(RecipeState.recipesLoaded([recipe]));
+  }
 
   Future<void> fetchRecipes() async {
     try {

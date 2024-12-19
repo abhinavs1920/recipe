@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:recipe/core/utils/logger.dart';
 import 'package:recipe/view/cubits/recipe_cubit.dart';
 import 'package:recipe/view/cubits/recipe_state.dart';
+import 'package:recipe/view/screens/recipe_details_screen.dart';
 import 'package:recipe/view/widgets/error_display.dart';
 import 'package:recipe/view/widgets/loading_indicator.dart';
 import 'package:recipe/view/widgets/recipe_card.dart';
@@ -40,12 +41,20 @@ class HomeFooter extends StatelessWidget {
               ),
               recipesLoaded: (recipes) => Column(
                 children: recipes.take(2).map((recipe) {
-                  return RecipeCard(
-                    recipe: recipe,
-                    onTap: () {
-                      logger.i('Recipe tapped: ${recipe.title}');
+                  return InkWell(
+                    onTap: (){
+                      context.read<RecipeCubit>().setSelectedRecipe(recipe);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RecipeDetailsScreen(),
+                        ),
+                      );
                     },
-                    isBookmarked: false,
+                    child: RecipeCard(
+                      recipe: recipe,
+                      isBookmarked: false, onTap: () {  },
+                    ),
                   );
                 }).toList(),
               ),

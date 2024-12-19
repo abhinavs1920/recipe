@@ -17,7 +17,7 @@ class HomeHeader extends StatelessWidget {
           children: [
             Text(
               'Good Morning',
-              style: GoogleFonts.nunito(
+              style: GoogleFonts.redressed(
                 fontSize: 16,
                 color: Colors.teal,
               ),

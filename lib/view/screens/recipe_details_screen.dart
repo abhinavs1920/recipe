@@ -5,34 +5,7 @@ import 'package:recipe/view/cubits/recipe_cubit.dart';
 import 'package:recipe/view/cubits/recipe_state.dart';
 
 class RecipeDetailsScreen extends StatefulWidget {
-  final String id;
-  final String title;
-  final String imageUrl;
-  final String description;
-  final List<String> ingredients;
-  final Map<String, double> nutrients;
-  final int cookTime;
-  final int prepTime;
-  final int totalTime;
-  final int servings;
-  final int steps;
-  final List<String> instructions;
-
-  const RecipeDetailsScreen({
-    super.key,
-    required this.id,
-    required this.title,
-    required this.imageUrl,
-    required this.description,
-    required this.ingredients,
-    required this.nutrients,
-    required this.cookTime,
-    required this.prepTime,
-    required this.totalTime,
-    required this.servings,
-    required this.steps,
-    required this.instructions,
-  });
+  const RecipeDetailsScreen({Key? key}) : super(key: key);
 
   @override
   State<RecipeDetailsScreen> createState() => _RecipeDetailsScreenState();
@@ -41,312 +14,277 @@ class RecipeDetailsScreen extends StatefulWidget {
 class _RecipeDetailsScreenState extends State<RecipeDetailsScreen> {
   bool _isBookmarked = false;
   bool _isLiked = false;
-  int _bookmarksCount = 0;
-  int _likesCount = 0;
   bool _isIngredientsExpanded = true;
   bool _isNutrientsExpanded = true;
 
   @override
-  void initState() {
-    super.initState();
-    _loadInitialData();
-  }
-
-  Future<void> _loadInitialData() async {
-    final cubit = context.read<RecipeCubit>();
-    await cubit.checkBookmarkStatus(widget.id);
-    await cubit.checkLikeStatus(widget.id);
-    await cubit.getRecipeStats(widget.id);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return BlocListener<RecipeCubit, RecipeState>(
-      listener: (context, state) {
-        state.when(
-          initial: () {},
-          loading: () {},
-          error: (message) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(message)),
-            );
-          },
-          recipesLoaded: (recipes) {},
-          bookmarkAdded: () {
-            setState(() {
-              _isBookmarked = true;
-              _bookmarksCount++;
-            });
-          },
-          bookmarkRemoved: () {
-            setState(() {
-              _isBookmarked = false;
-              _bookmarksCount--;
-            });
-          },
-          likeAdded: () {
-            setState(() {
-              _isLiked = true;
-              _likesCount++;
-            });
-          },
-          likeRemoved: () {
-            setState(() {
-              _isLiked = false;
-              _likesCount--;
-            });
-          },
-          bookmarkStatus: (isBookmarked) {
-            setState(() {
-              _isBookmarked = isBookmarked;
-            });
-          },
-          likeStatus: (isLiked) {
-            setState(() {
-              _isLiked = isLiked;
-            });
-          },
-          stats: (bookmarksCount, likesCount) {
-            setState(() {
-              _bookmarksCount = bookmarksCount;
-              _likesCount = likesCount;
-            });
-          },
-        );
-      },
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Recipe Image and Header
-              Stack(
-                children: [
-                  // Recipe Image
-                  Image.network(
-                    widget.imageUrl,
-                    height: 300,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
+    final recipe = context.read<RecipeCubit>().selectedRecipe;
+    if (recipe == null) {
+      return const Scaffold(
+        body: Center(child: Text('No recipe selected')),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                Image.asset(
+                  'assets/images/butter-chicken.png',
+                  height: 300,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+                Container(
+                  height: 300,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.6),
+                        Colors.transparent,
+                      ],
+                    ),
                   ),
-                  // Back Button and Actions
-                  Positioned(
-                    top: MediaQuery.of(context).padding.top + 16,
-                    left: 16,
-                    right: 16,
+                ),
+                Positioned(
+                  top: MediaQuery.of(context).padding.top + 16,
+                  left: 16,
+                  right: 16,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildCircularButton(
+                        icon: Icons.arrow_back,
+                        onTap: () => Navigator.pop(context),
+                      ),
+                      Row(
+                        children: [
+                          _buildCircularButton(
+                            icon: _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                            onTap: () => setState(() => _isBookmarked = !_isBookmarked),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildCircularButton(
+                            icon: _isLiked ? Icons.favorite : Icons.favorite_border,
+                            onTap: () => setState(() => _isLiked = !_isLiked),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    recipe.title,
+                    style: GoogleFonts.nunito(
+                      fontSize: 34,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF0B2634),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 25),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD7FFEE),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      recipe.description,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.nunito(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildCircularButton(
-                          icon: Icons.arrow_back,
-                          onTap: () => Navigator.pop(context),
+                        Text(
+                          'Category: ',
+                          style: GoogleFonts.nunito(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
                         ),
-                        Row(
-                          children: [
-                            _buildCircularButton(
-                              icon: _isBookmarked
-                                  ? Icons.bookmark
-                                  : Icons.bookmark_border,
-                              onTap: () {
-                                context.read<RecipeCubit>().toggleBookmark(widget.id);
-                              },
-                            ),
-                            const SizedBox(width: 8),
-                            _buildCircularButton(
-                              icon: _isLiked
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              onTap: () {
-                                context.read<RecipeCubit>().toggleLike(widget.id);
-                              },
-                            ),
-                          ],
+                        Text(
+                          'Frozen Desserts',
+                          style: GoogleFonts.nunito(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    Text(
-                      widget.title,
-                      style: GoogleFonts.nunito(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildInfoCard(title: '${recipe.cookTime}h', subtitle: 'Cook Time'),
+                          SizedBox(height: 16),
+                          _buildInfoCard(title: '${recipe.prepTime}m', subtitle: 'Prep Time'),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Description
-                    Text(
-                      widget.description,
-                      style: GoogleFonts.nunito(
-                        fontSize: 14,
-                        color: Colors.grey[600],
+                      SizedBox(width: 16),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildInfoCard(title: '${recipe.ingredients.length}', subtitle: 'Ingredients'),
+                          SizedBox(height: 16),
+                          _buildInfoCard(title: '${recipe.instructions.length}', subtitle: 'Steps'),
+                        ],
                       ),
+                      SizedBox(width: 16),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildInfoCard(title: '~${recipe.cookTime + recipe.prepTime}h', subtitle: 'Total Time'),
+                          SizedBox(height: 16),
+                          _buildInfoCard(title: '${recipe.servings}', subtitle: 'Servings'),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD7FFEE),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    const SizedBox(height: 24),
-
-                    // Recipe Info Cards
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildInfoCard(
-                          title: '${widget.cookTime}h',
-                          subtitle: 'Cook Time',
+                        Text(
+                          'Ingredients',
+                          style: GoogleFonts.nunito(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF0B2634),
+                          ),
                         ),
-                        _buildInfoCard(
-                          title: '${widget.prepTime}m',
-                          subtitle: 'Prep Time',
-                        ),
-                        _buildInfoCard(
-                          title: '~${widget.totalTime}h',
-                          subtitle: 'Total Time',
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildInfoCard(
-                          title: widget.ingredients.length.toString(),
-                          subtitle: 'Ingredients',
-                        ),
-                        _buildInfoCard(
-                          title: widget.steps.toString(),
-                          subtitle: 'Steps',
-                        ),
-                        _buildInfoCard(
-                          title: '${widget.servings}.0',
-                          subtitle: 'Servings',
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Ingredients Section
-                    _buildExpandableSection(
-                      title: 'Ingredient',
-                      isExpanded: _isIngredientsExpanded,
-                      onToggle: () {
-                        setState(() {
-                          _isIngredientsExpanded = !_isIngredientsExpanded;
-                        });
-                      },
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: widget.ingredients
-                            .map((ingredient) => Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
-                                  child: Text(
-                                    '• $ingredient',
-                                    style: GoogleFonts.nunito(fontSize: 14),
-                                  ),
-                                ))
-                            .toList(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Nutrients Section
-                    _buildExpandableSection(
-                      title: 'Nutrients Chart',
-                      isExpanded: _isNutrientsExpanded,
-                      onToggle: () {
-                        setState(() {
-                          _isNutrientsExpanded = !_isNutrientsExpanded;
-                        });
-                      },
-                      child: Column(
-                        children: widget.nutrients.entries.map((entry) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        const SizedBox(height: 16),
+                        Wrap(
+                          spacing: 14,
+                          runSpacing: 8,
+                          children: recipe.ingredients.map((ingredient) {
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  entry.key,
-                                  style: GoogleFonts.nunito(fontSize: 14),
+                                Container(
+                                  width: 5,
+                                  height: 5,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF0B2634),
+                                    shape: BoxShape.circle,
+                                  ),
                                 ),
+                                const SizedBox(width: 14),
                                 Text(
-                                  '${entry.value}',
+                                  ingredient,
                                   style: GoogleFonts.nunito(
                                     fontSize: 14,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF0B2634),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD7FFEE),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Instructions',
+                          style: GoogleFonts.nunito(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF0B2634),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ...recipe.instructions.asMap().entries.map((entry) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).primaryColor,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${entry.key + 1}',
+                                      style: GoogleFonts.nunito(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    entry.value,
+                                    style: GoogleFonts.nunito(
+                                      fontSize: 14,
+                                      height: 1.5,
+                                      color: const Color(0xFF0B2634),
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                           );
                         }).toList(),
-                      ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-
-                    // Instructions Section
-                    Text(
-                      'Instructions',
-                      style: GoogleFonts.nunito(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: widget.instructions.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                width: 24,
-                                height: 24,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF4CAF50),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    '${index + 1}',
-                                    style: GoogleFonts.nunito(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  widget.instructions[index],
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 14,
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -356,23 +294,17 @@ class _RecipeDetailsScreenState extends State<RecipeDetailsScreen> {
     required IconData icon,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Icon(icon),
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: IconButton(
+        icon: Icon(icon),
+        onPressed: onTap,
+        color: const Color(0xFF0B2634),
       ),
     );
   }
@@ -382,19 +314,23 @@ class _RecipeDetailsScreenState extends State<RecipeDetailsScreen> {
     required String subtitle,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      width: 90,
+      height: 90,
+      margin: const EdgeInsets.only(right: 16),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9),
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFFD7FFEE),
+        borderRadius: BorderRadius.circular(17),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             title,
             style: GoogleFonts.nunito(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF4CAF50),
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF0B2634),
             ),
           ),
           const SizedBox(height: 4),
@@ -402,47 +338,12 @@ class _RecipeDetailsScreenState extends State<RecipeDetailsScreen> {
             subtitle,
             style: GoogleFonts.nunito(
               fontSize: 12,
-              color: Colors.grey[600],
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF0B2634),
             ),
           ),
         ],
       ),
     );
   }
-
-  Widget _buildExpandableSection({
-    required String title,
-    required Widget child,
-    required bool isExpanded,
-    required VoidCallback onToggle,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InkWell(
-          onTap: onToggle,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.nunito(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Icon(
-                isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                color: const Color(0xFF4CAF50),
-              ),
-            ],
-          ),
-        ),
-        if (isExpanded) ...[
-          const SizedBox(height: 16),
-          child,
-        ],
-      ],
-    );
-  }
-} 
+}
